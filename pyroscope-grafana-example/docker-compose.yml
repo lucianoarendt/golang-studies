@@ -1,0 +1,41 @@
+version: '3.9'
+services:
+  pyroscope:
+    image: 'pyroscope/pyroscope:latest'
+    container_name: pyroscope
+    ports:
+      - '4040:4040'
+    command:
+      - 'server'
+    networks:
+        - testing-grafana-golang
+  app:
+    build: .
+    container_name: app
+    depends_on:
+      - pyroscope
+    environment:
+      - PYROSCOPE_SERVER_ADDRESS=http://pyroscope:4040
+    networks:
+      - testing-grafana-golang
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    depends_on:
+      - pyroscope
+      - app
+    env_file: configuration.env
+    networks:
+      - testing-grafana-golang
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana:/var/lib/grafana
+
+volumes:
+  grafana: {}
+
+networks:
+  testing-grafana-golang:
+    driver: bridge
